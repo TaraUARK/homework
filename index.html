@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Homework Planner</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Homework">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png">
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --surface-2: #efede7;
+    --text: #1d1d1f;
+    --muted: #6b6a66;
+    --border: #dcd9d1;
+    --accent: #2f5bd3;
+    --accent-text: #ffffff;
+    --tomorrow: #e8590c;
+    --tomorrow-2: #d9480f;
+    --tomorrow-bg: #fff1e6;
+    --tomorrow-text: #ffffff;
+    --today: #b7791f;
+    --today-bg: #fff8e1;
+    --late: #c92a2a;
+    --late-bg: #fff0f0;
+    --done: #2b8a3e;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141414;
+      --surface: #1f1f1f;
+      --surface-2: #2a2a2a;
+      --text: #f2f2f0;
+      --muted: #a3a29d;
+      --border: #3a3a3a;
+      --accent: #6d8ff0;
+      --tomorrow: #f76707;
+      --tomorrow-2: #e8590c;
+      --tomorrow-bg: #3a2210;
+      --today: #f0b84a;
+      --today-bg: #33290f;
+      --late: #ff6b6b;
+      --late-bg: #3a1717;
+      --done: #51cf66;
+      --shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px 80px; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 18px; flex-wrap: wrap; }
+  h1 { font-size: 28px; margin: 0; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 15px; margin-top: 2px; }
+  .kid-btn {
+    border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
+    padding: 8px 14px; font-size: 15px; box-shadow: var(--shadow);
+  }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+
+  /* Add form */
+  form.add { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  form.add .full { grid-column: 1 / -1; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  label .opt { text-transform: none; font-weight: 400; letter-spacing: 0; }
+  input[type=text], input[type=number], input[type=date] {
+    width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg); min-height: 48px; -webkit-appearance: none; appearance: none;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .quick { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--border); background: var(--surface-2); border-radius: 999px; padding: 4px 10px; font-size: 13px; }
+  .primary {
+    background: var(--accent); color: var(--accent-text); border: 0; border-radius: 12px;
+    padding: 14px; font-weight: 600; min-height: 50px;
+  }
+  .secondary { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; min-height: 48px; }
+  .danger { color: var(--late); }
+
+  /* Tomorrow banner */
+  .banner {
+    display: flex; align-items: center; gap: 14px;
+    background: linear-gradient(135deg, var(--tomorrow), var(--tomorrow-2));
+    color: var(--tomorrow-text); border-radius: 16px; padding: 16px 18px; margin-bottom: 18px;
+    box-shadow: 0 6px 20px rgba(232,89,12,.35);
+  }
+  .banner .big { font-size: 40px; font-weight: 800; line-height: 1; }
+  .banner .txt { font-weight: 600; font-size: 18px; }
+  .banner .txt small { display: block; font-weight: 400; opacity: .9; font-size: 14px; }
+  .banner.calm { background: var(--surface); color: var(--text); border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .banner.calm .big { color: var(--done); }
+
+  /* Sections */
+  section { margin-bottom: 22px; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 8px 4px; display: flex; align-items: center; gap: 8px; }
+  h2 .count { background: var(--surface-2); color: var(--muted); border-radius: 999px; padding: 1px 8px; font-size: 12px; }
+  .s-tomorrow h2 { color: var(--tomorrow); font-size: 16px; }
+  .s-today h2 { color: var(--today); }
+  .s-late h2 { color: var(--late); }
+  .s-later h2 { color: var(--muted); }
+  .list { display: grid; gap: 10px; }
+
+  .item {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px;
+    box-shadow: var(--shadow);
+  }
+  .item .name { font-weight: 600; font-size: 18px; word-break: break-word; }
+  .item .meta { color: var(--muted); font-size: 14px; margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .item .pts { font-weight: 700; font-size: 15px; white-space: nowrap; text-align: right; }
+  .item .pts small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  .item .body { cursor: pointer; min-width: 0; }
+
+  .s-tomorrow .item {
+    background: var(--tomorrow-bg); border: 2px solid var(--tomorrow);
+    border-left-width: 10px; padding: 16px;
+  }
+  .s-tomorrow .item .name { font-size: 20px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .06em; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; }
+  .tag.tomorrow { background: var(--tomorrow); color: #fff; }
+  .tag.late { background: var(--late); color: #fff; }
+  .tag.today { background: var(--today); color: #fff; }
+  .s-today .item { background: var(--today-bg); border-left: 6px solid var(--today); }
+  .s-late .item { background: var(--late-bg); border-left: 6px solid var(--late); }
+
+  .check {
+    width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border);
+    background: var(--surface); display: grid; place-items: center; padding: 0; flex: none;
+  }
+  .s-tomorrow .check { border-color: var(--tomorrow); }
+  .check svg { width: 18px; height: 18px; opacity: 0; }
+  .check:hover svg { opacity: .35; }
+  .done-list .check { background: var(--done); border-color: var(--done); }
+  .done-list .check svg { opacity: 1; color: #fff; }
+  .done-list .name { text-decoration: line-through; color: var(--muted); font-weight: 500; }
+
+  .empty { text-align: center; color: var(--muted); padding: 30px 16px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin: 0 0 8px 4px; }
+  .footer { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: 14px; padding: 8px; }
+
+  /* Profile picker */
+  .pick { max-width: 460px; margin: 10vh auto 0; text-align: center; }
+  .pick h1 { margin-bottom: 6px; }
+  .kids { display: grid; gap: 12px; margin: 24px 0; }
+  .kid {
+    font-size: 22px; font-weight: 700; padding: 22px; border-radius: 18px;
+    border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow);
+  }
+  .addkid { display: flex; gap: 8px; }
+  .addkid input { flex: 1; }
+
+  /* Dialog */
+  dialog { border: 0; border-radius: 18px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); color: var(--text); }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog .card { border: 0; box-shadow: none; display: grid; gap: 12px; }
+  .row { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+  .dlg-title { margin: 0; color: var(--text); font-size: 20px; text-transform: none; letter-spacing: 0; }
+  .head-btns { display: flex; gap: 8px; align-items: center; }
+  .add-btn { background: var(--accent); color: var(--accent-text); border: 0; border-radius: 999px; padding: 10px 18px; font-weight: 600; font-size: 16px; box-shadow: var(--shadow); }
+  .s-tomorrow { margin-bottom: 40px; }
+  .item .name .tag { vertical-align: middle; margin-left: 6px; }
+  .item .meta { display: block; }
+  .item .meta .sep { opacity: .5; margin: 0 4px; }
+  .when { text-align: right; font-size: 14px; color: var(--muted); white-space: nowrap; }
+  .when b { font-size: 22px; color: var(--text); display: inline-block; margin: 0 1px; }
+  .s-tomorrow .when b { color: var(--tomorrow); }
+  .s-late .when b { color: var(--late); }
+  .s-today .when b { color: var(--today); font-size: 18px; }
+  .done-list .when b { color: var(--done); font-size: 16px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--text); color: var(--bg); border-radius: 12px; padding: 12px 16px;
+    display: flex; gap: 14px; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,.25); z-index: 10;
+    max-width: calc(100vw - 32px);
+  }
+  .toast button { background: none; border: 0; color: var(--bg); font-weight: 700; text-decoration: underline; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 520px) {
+    form.add { grid-template-columns: 1fr; }
+    h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<dialog id="edit">
+  <form method="dialog" class="card" id="editForm" autocomplete="off">
+    <h2 class="dlg-title" id="e-title">Add assignment</h2>
+    <div><label for="e-name">Assignment name</label><input type="text" id="e-name" required maxlength="120" placeholder="e.g. Chapter 4 worksheet"></div>
+    <div><label for="e-cls">Class</label><input type="text" id="e-cls" list="classes" required maxlength="60" placeholder="e.g. Math"></div>
+    <div><label for="e-due">Due date</label><input type="date" id="e-due" required>
+      <div class="quick"><button type="button" class="chip" data-quick="school">Tomorrow</button><button type="button" class="chip" data-quick="2">In 2 days</button><button type="button" class="chip" data-quick="7">Next week</button></div>
+    </div>
+    <div><label for="e-pts">Points <span class="opt">(optional – leave blank if you don’t know)</span></label><input type="number" id="e-pts" inputmode="numeric" min="0" step="any" placeholder="e.g. 20"></div>
+    <div class="row">
+      <button type="button" class="secondary danger" id="e-del">Delete</button>
+      <div style="display:flex;gap:10px;margin-left:auto">
+        <button type="button" class="secondary" id="e-cancel">Cancel</button>
+        <button type="submit" class="primary" style="padding:12px 20px" id="e-save">Add</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="teacher">
+  <div class="card">
+    <h2 class="dlg-title">This assignment was late</h2>
+    <p style="margin:0">Have you told your teacher that <b id="t-name"></b> is done?</p>
+    <div class="row">
+      <button type="button" class="secondary" id="t-no">Not yet</button>
+      <button type="button" class="primary" style="padding:12px 20px" id="t-yes">Yes, I told my teacher</button>
+    </div>
+  </div>
+</dialog>
+<datalist id="classes"></datalist>
+<div id="toast" class="toast hidden"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+
+<script>
+(() => {
+  const KEY = 'homework-planner-v1';
+  const $ = (s, el = document) => el.querySelector(s);
+
+  // ---------- storage ----------
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d && Array.isArray(d.kids) && d.items) return d;
+      }
+    } catch (e) {}
+    return { kids: [], current: null, items: {} };
+  }
+  let state = load();
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  if (navigator.storage && navigator.storage.persist) { try { navigator.storage.persist(); } catch (e) {} }
+
+  // ---------- dates (local calendar days, no timezone surprises) ----------
+  const pad = n => String(n).padStart(2, '0');
+  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const todayDate = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const daysFromToday = s => Math.round((parse(s) - todayDate()) / 86400000);
+  const fmt = s => parse(s).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  function relative(s) {
+    const n = daysFromToday(s);
+    if (n === 0) return 'today';
+    if (n === 1) return 'tomorrow';
+    if (n === -1) return 'yesterday';
+    if (n < 0) return `${-n} days ago`;
+    return `in ${n} days`;
+  }
+
+  // next school day: Fri/Sat/Sun -> Monday
+  function nextSchoolDay() {
+    let d = addDays(todayDate(), 1);
+    while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+    return d;
+  }
+  function whenHtml(it) {
+    if (it.done) return '<b>Done</b>';
+    const n = daysFromToday(it.due);
+    if (n === 0) return 'Due <b>today</b>';
+    if (n > 0) return `Due in <b>${n}</b> day${n === 1 ? '' : 's'}`;
+    return `<b>${-n}</b> day${n === -1 ? '' : 's'} late`;
+  }
+
+  // ---------- prioritizing ----------
+  // 0 = due next school day ("tomorrow"), 1 = due today, 2 = past due, 3 = later
+  function group(it) {
+    const n = daysFromToday(it.due);
+    if (it.due === iso(nextSchoolDay())) return 0;
+    if (n === 0) return 1;
+    if (n < 0) return 2;
+    return 3;
+  }
+  function byPoints(a, b) {
+    const pa = a.points, pb = b.points;
+    if (pa == null && pb == null) return 0;
+    if (pa == null) return 1;   // unknown points go after known points
+    if (pb == null) return -1;
+    return pb - pa;             // more points first
+  }
+  function compare(a, b) {
+    const ga = group(a), gb = group(b);
+    if (ga !== gb) return ga - gb;
+    if (ga === 3) {
+      if (a.due !== b.due) return a.due < b.due ? -1 : 1;  // earlier due date first
+      return byPoints(a, b) || a.name.localeCompare(b.name);
+    }
+    return byPoints(a, b) || (a.due < b.due ? -1 : a.due > b.due ? 1 : 0) || a.name.localeCompare(b.name);
+  }
+
+  // ---------- helpers ----------
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const kid = () => state.kids.find(k => k.id === state.current);
+  const items = () => (state.items[state.current] = state.items[state.current] || []);
+  const ptsText = p => p == null ? '' : `${+p} pt${+p === 1 ? '' : 's'}`;
+  const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  let toastTimer, undoFn;
+  function toast(msg, undo) {
+    $('#toastMsg').textContent = msg;
+    undoFn = undo;
+    $('#toastUndo').classList.toggle('hidden', !undo);
+    $('#toast').classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), 5000);
+  }
+  $('#toastUndo').onclick = () => { if (undoFn) undoFn(); $('#toast').classList.add('hidden'); };
+
+  // ---------- views ----------
+  function render() {
+    if (!kid()) return renderPicker();
+    renderList();
+  }
+
+  function renderPicker() {
+    const app = $('#app');
+    app.innerHTML = `
+      <div class="pick">
+        <h1>Homework Planner</h1>
+        <div class="sub">${state.kids.length ? 'Who’s doing homework?' : 'Add your name to get started.'}</div>
+        <div class="kids">
+          ${state.kids.map(k => `<button class="kid" data-id="${k.id}">${esc(k.name)}</button>`).join('')}
+        </div>
+        <form class="addkid">
+          <input type="text" placeholder="Add a name" maxlength="30" aria-label="Name">
+          <button class="primary" style="padding:12px 18px">Add</button>
+        </form>
+      </div>`;
+    app.querySelectorAll('.kid').forEach(b => b.onclick = () => { state.current = b.dataset.id; save(); render(); });
+    $('.addkid', app).onsubmit = e => {
+      e.preventDefault();
+      const name = $('input', e.target).value.trim();
+      if (!name) return;
+      const k = { id: uid(), name };
+      state.kids.push(k);
+      state.current = k.id;
+      save(); render();
+    };
+  }
+
+  function card(it, extraTag) {
+    const meta = [esc(it.cls), `Due ${fmt(it.due)}`, it.points != null ? ptsText(it.points) : null]
+      .filter(Boolean).join('<span class="sep">|</span>');
+    return `
+      <div class="item" data-id="${it.id}">
+        <button class="check" data-act="toggle" aria-label="${it.done ? 'Mark not done' : 'Mark done'}">${checkSvg}</button>
+        <div class="body" data-act="edit">
+          <div class="name">${esc(it.name)}${extraTag || ''}</div>
+          <div class="meta">${meta}</div>
+        </div>
+        <div class="when">${whenHtml(it)}</div>
+      </div>`;
+  }
+
+  function section(cls, title, list, tag) {
+    if (!list.length) return '';
+    return `<section class="${cls}"><h2>${title} <span class="count">${list.length}</span></h2>
+      <div class="list">${list.map(it => card(it, tag)).join('')}</div></section>`;
+  }
+
+  function renderList() {
+    const k = kid();
+    const all = items();
+    const open = all.filter(i => !i.done).sort(compare);
+    const groups = [[], [], [], []];
+    open.forEach(i => groups[group(i)].push(i));
+    const done = all.filter(i => i.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 30);
+    const tomorrowStr = iso(nextSchoolDay());
+    const classes = [...new Set(all.map(i => i.cls))].sort((a, b) => a.localeCompare(b));
+    $('#classes').innerHTML = classes.map(c => `<option value="${esc(c)}">`).join('');
+
+    const nTom = groups[0].length;
+    const banner = nTom
+      ? `<div class="banner"><div class="big">${nTom}</div><div class="txt">${nTom === 1 ? 'assignment' : 'assignments'} due tomorrow<small>Do ${nTom === 1 ? 'this' : 'these'} first! (${fmt(tomorrowStr)})</small></div></div>`
+      : `<div class="banner calm"><div class="big">✓</div><div class="txt">Nothing due tomorrow<small>${open.length ? 'Work on what’s next below.' : 'All caught up.'}</small></div></div>`;
+
+    const app = $('#app');
+    app.innerHTML = `
+      <header>
+        <div>
+          <h1>${esc(k.name)}’s Homework</h1>
+          <div class="sub">${todayDate().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+        </div>
+        <div class="head-btns">
+          <button class="kid-btn" id="switch">Switch person</button>
+          <button class="add-btn" id="addBtn">+ Add assignment</button>
+        </div>
+      </header>
+
+      ${banner}
+      ${open.length ? '' : `<div class="empty">No assignments yet. Tap “+ Add assignment” to add one.</div>`}
+      ${section('s-tomorrow', 'Due tomorrow', groups[0], '<span class="tag tomorrow">Due tomorrow</span>')}
+      ${section('s-today', 'Due today', groups[1], '<span class="tag today">Today</span>')}
+      ${section('s-late', 'Past due', groups[2], '<span class="tag late">Late</span>')}
+      ${section('s-later', 'Coming up', groups[3])}
+      ${done.length ? `<details><summary>Done (${done.length})</summary><div class="list done-list">${done.map(i => card(i)).join('')}</div></details>` : ''}
+
+      <div class="footer">
+        <button class="link" id="backup">Save a backup</button>
+        <button class="link" id="restore">Restore backup</button>
+        <button class="link" id="clearDone">Clear done list</button>
+      </div>
+      <input type="file" id="restoreFile" accept="application/json,.json" class="hidden">
+    `;
+
+    $('#addBtn').onclick = () => openEdit(null);
+    $('#switch').onclick = () => { state.current = null; save(); render(); };
+
+    app.querySelectorAll('.item').forEach(el => {
+      const it = items().find(i => i.id === el.dataset.id);
+      $('[data-act=toggle]', el).onclick = () => {
+        if (it.done) { it.done = false; it.doneAt = null; save(); render(); return; }
+        if (group(it) === 2) askTeacher(it); else complete(it);
+      };
+      $('[data-act=edit]', el).onclick = () => openEdit(it);
+    });
+
+    $('#clearDone').onclick = () => {
+      const removed = items().filter(i => i.done);
+      if (!removed.length) return toast('Nothing to clear');
+      state.items[state.current] = items().filter(i => !i.done);
+      save(); render();
+      toast(`Cleared ${removed.length} done`, () => { items().push(...removed); save(); render(); });
+    };
+
+    $('#backup').onclick = () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `homework-backup-${iso(todayDate())}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    };
+    $('#restore').onclick = () => $('#restoreFile').click();
+    $('#restoreFile').onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const d = JSON.parse(await file.text());
+        if (!d || !Array.isArray(d.kids) || !d.items) throw new Error();
+        if (!confirm('Replace everything in this app with the backup?')) return;
+        state = d; save(); render(); toast('Backup restored');
+      } catch (err) { alert('That file is not a Homework Planner backup.'); }
+    };
+  }
+
+  // ---------- completing ----------
+  function complete(it) {
+    it.done = true; it.doneAt = Date.now();
+    save(); render();
+    toast(`Done: ${it.name}`, () => { it.done = false; it.doneAt = null; save(); render(); });
+  }
+  const tdlg = $('#teacher');
+  let lateItem = null;
+  function askTeacher(it) {
+    lateItem = it;
+    $('#t-name').textContent = it.name;
+    tdlg.showModal();
+  }
+  $('#t-yes').onclick = () => { tdlg.close(); if (lateItem) complete(lateItem); lateItem = null; };
+  $('#t-no').onclick = () => {
+    tdlg.close(); lateItem = null;
+    toast('Tell your teacher, then check it off again.');
+  };
+
+  // ---------- add / edit dialog ----------
+  const dlg = $('#edit');
+  let editing = null;   // null = adding a new assignment
+  function openEdit(it) {
+    editing = it;
+    $('#e-title').textContent = it ? 'Edit assignment' : 'Add assignment';
+    $('#e-save').textContent = it ? 'Save' : 'Add';
+    $('#e-del').classList.toggle('hidden', !it);
+    $('#e-name').value = it ? it.name : '';
+    $('#e-cls').value = it ? it.cls : '';
+    $('#e-due').value = it ? it.due : iso(nextSchoolDay());
+    $('#e-pts').value = it && it.points != null ? it.points : '';
+    dlg.showModal();
+    if (!it) $('#e-name').focus();
+  }
+  dlg.querySelectorAll('[data-quick]').forEach(b => b.onclick = () => {
+    const q = b.dataset.quick;
+    $('#e-due').value = iso(q === 'school' ? nextSchoolDay() : addDays(todayDate(), +q));
+  });
+  $('#editForm').onsubmit = () => {
+    const pts = $('#e-pts').value.trim();
+    const vals = { name: $('#e-name').value.trim(), cls: $('#e-cls').value.trim(), due: $('#e-due').value, points: pts === '' ? null : Number(pts) };
+    if (editing) Object.assign(editing, vals);
+    else { items().push({ id: uid(), ...vals, done: false, created: Date.now() }); toast('Assignment added'); }
+    save(); render();
+  };
+  $('#e-cancel').onclick = () => dlg.close();
+  $('#e-del').onclick = () => {
+    const it = editing, list = items(), idx = list.indexOf(it);
+    if (idx >= 0) list.splice(idx, 1);
+    dlg.close(); save(); render();
+    toast(`Deleted: ${it.name}`, () => { items().splice(idx, 0, it); save(); render(); });
+  };
+
+  // re-sort when the day changes or the app comes back to the front
+  let lastDay = iso(todayDate());
+  const refresh = () => { const d = iso(todayDate()); if (d !== lastDay) { lastDay = d; render(); } };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  setInterval(refresh, 60000);
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
